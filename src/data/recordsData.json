@@ -1,0 +1,122 @@
+[
+  {
+    "recordNumber": "REC002",
+    "recordType": "Business",
+    "applicantName": "Sarah Johnson",
+    "dateSubmitted": "2024-01-14",
+    "addresses": ["123 Main St", "456 Oak Ave"],
+    "recordStatus": "Approved",
+    "emails": ["sarah.j@example.com"],
+    "phoneNumbers": ["555-1234"],
+    "description": "Business license renewal",
+    "tenure": 3
+  },
+  {
+    "recordNumber": "REC006",
+    "recordType": "Business",
+    "applicantName": "Tom Anderson",
+    "dateSubmitted": "2024-01-20",
+    "addresses": ["789 Pine Rd"],
+    "recordStatus": "Pending",
+    "emails": ["tom.a@example.com", "anderson.tom@work.com"],
+    "phoneNumbers": ["555-5678", "555-8765"],
+    "description": "New business application",
+    "tenure": 1
+  },
+  {
+    "recordNumber": "REC010",
+    "recordType": "Building Permit",
+    "applicantName": "Emily Carter",
+    "dateSubmitted": "2024-02-05",
+    "addresses": ["22 Maple St"],
+    "recordStatus": "Rejected",
+    "emails": ["emily.carter@example.com"],
+    "phoneNumbers": ["555-4321"],
+    "description": "Permit for home renovation",
+    "tenure": 5
+  },
+  {
+    "recordNumber": "REC015",
+    "recordType": "Business",
+    "applicantName": "Michael Lee",
+    "dateSubmitted": "2024-02-18",
+    "addresses": ["101 Commerce Blvd", "202 Market St"],
+    "recordStatus": "Approved",
+    "emails": ["michael.lee@company.com"],
+    "phoneNumbers": ["555-2468"],
+    "description": "Expansion request",
+    "tenure": 7
+  },
+  {
+    "recordNumber": "REC021",
+    "recordType": "Building Permit",
+    "applicantName": "Anna Kim",
+    "dateSubmitted": "2024-03-01",
+    "addresses": ["77 Elm St"],
+    "recordStatus": "Pending",
+    "emails": ["anna.kim@example.com"],
+    "phoneNumbers": ["555-1357"],
+    "description": "New home construction",
+    "tenure": 2
+  },
+  {
+    "recordNumber": "REC025",
+    "recordType": "Business",
+    "applicantName": "David Smith",
+    "dateSubmitted": "2024-03-10",
+    "addresses": ["303 Industrial Pkwy"],
+    "recordStatus": "Approved",
+    "emails": ["david.smith@biz.com"],
+    "phoneNumbers": ["555-9753"],
+    "description": "License renewal",
+    "tenure": 10
+  },
+  {
+    "recordNumber": "REC030",
+    "recordType": "Building Permit",
+    "applicantName": "Olivia Brown",
+    "dateSubmitted": "2024-03-22",
+    "addresses": ["55 Cedar Ct"],
+    "recordStatus": "Rejected",
+    "emails": ["olivia.brown@example.com"],
+    "phoneNumbers": ["555-8642"],
+    "description": "Fence permit",
+    "tenure": 4
+  },
+  {
+    "recordNumber": "REC040",
+    "recordType": "Zoning Variance",
+    "applicantName": "John Doe",
+    "dateSubmitted": "2024-04-10",
+    "addresses": ["88 Market St"],
+    "recordStatus": "Approved",
+    "emails": ["john.doe@Zoning Variance.com"],
+    "phoneNumbers": ["555-1111"],
+    "description": "Zoning Variance property registration",
+    "tenure": 12
+  },
+  {
+    "recordNumber": "REC045",
+    "recordType": "Zoning Variance",
+    "applicantName": "Jane Miller",
+    "dateSubmitted": "2024-04-18",
+    "addresses": ["200 Factory Rd"],
+    "recordStatus": "Pending",
+    "emails": ["jane.miller@industry.com"],
+    "phoneNumbers": ["555-2222"],
+    "description": "Industrial license application",
+    "tenure": 8
+  },
+  {
+    "recordNumber": "REC050",
+    "recordType": "Zoning Variance",
+    "applicantName": "Gov Admin",
+    "dateSubmitted": "2024-05-01",
+    "addresses": ["1 Capitol Ave"],
+    "recordStatus": "Approved",
+    "emails": ["admin@gov.com"],
+    "phoneNumbers": ["555-3333"],
+    "description": "Government project approval",
+    "tenure": 15
+  }
+]

@@ -33,6 +33,7 @@ export default function RecordTypeSidebar({ recordTypes, selectedType, onSelectT
                 selected={type === selectedType}
                 component={CustomButtonLink}
                 to={`/${type.toLowerCase().replace(/ /g, "-")}`}
+                onClick={() => onSelectType(type)}
               >
                 {type}
               </ListItemButton>
