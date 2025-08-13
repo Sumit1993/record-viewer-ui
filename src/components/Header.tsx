@@ -1,11 +1,11 @@
 import { Box, Typography, Button } from "@mui/material";
+import { useNavigate } from '@tanstack/react-router';
 
 export type HeaderProps = {
   title: string;
   totalRecords: number;
   lastUpdated: string;
   activeFilters: number;
-  onAddNewRecord?: () => void;
 };
 
 export default function Header({
@@ -13,8 +13,9 @@ export default function Header({
   totalRecords,
   lastUpdated,
   activeFilters,
-  onAddNewRecord,
 }: HeaderProps) {
+  const navigate = useNavigate();
+
   return (
     <Box
       sx={{
@@ -39,7 +40,7 @@ export default function Header({
         variant="contained"
         color="primary"
         sx={{ borderRadius: 2, fontWeight: 500 }}
-        onClick={onAddNewRecord}
+        onClick={() => navigate({ to: '/add-new-record' })}
       >
         Add New Record
       </Button>

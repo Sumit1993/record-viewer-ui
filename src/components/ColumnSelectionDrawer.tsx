@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { getAutocompleteSuggestions } from '../api/records'; // Added import
+import React, { useState, useRef } from "react"; // Added useRef
 // --- Dynamic Filter State Types ---
 type FilterCondition = {
   operator: 'is' | 'is not';
@@ -44,132 +45,174 @@ const columnsList: ColumnOption[] = [
   { id: "tenure", label: "Tenure (Years)" },
 ];
 
+const recordTypeOptions = ['Business', 'Building Permit', 'Zoning Variance'];
+const recordStatusOptions = ['Open', 'Closed', 'In Progress', 'On Hold'];
+
+const autocompleteFields = ['applicantName', 'description']; // Added autocomplete fields
+
 export interface ColumnSelectionDrawerProps {
   open: boolean;
-  selectedColumns: string[];
   onClose: () => void;
-  onChange: (columns: string[]) => void;
-  onApply?: () => void;
-  // For filter drawer usage
+  mode: 'columns' | 'filters'; // New prop to indicate mode
+
+  // Props for Columns mode
+  selectedColumns?: string[];
+  onColumnsChange?: (columns: string[]) => void;
+  onApplyColumns?: () => void; // Renamed from onApply
+
+  // Props for Filter mode
   filterGroups?: FilterGroup[];
-  setFilterGroups?: (groups: FilterGroup[]) => void;
+  onFilterGroupsChange?: (groups: FilterGroup[]) => void; // Renamed from setFilterGroups
   onApplyFilters?: () => void;
 }
 
 export default function ColumnSelectionDrawer({
   open,
-  selectedColumns,
   onClose,
-  onChange,
-  onApply,
-  filterGroups: externalFilterGroups,
-  setFilterGroups: externalSetFilterGroups,
+  mode, // New prop
+  selectedColumns,
+  onColumnsChange, // Renamed
+  onApplyColumns, // Renamed
+  filterGroups,
+  onFilterGroupsChange, // Renamed from setFilterGroups
   onApplyFilters,
 }: ColumnSelectionDrawerProps) {
-  const [tab, setTab] = useState(externalFilterGroups ? 0 : 1); // 0 = Advance Filters, 1 = Columns
+  // Removed tab state
 
-  // --- Dynamic Filter State ---
-  type FilterCondition = {
-    operator: 'is' | 'is not';
-    value: string;
-    id: string;
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const debouncedFetchSuggestions = (field: string, query: string) => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    if (query.length < 2) { // Only fetch if query is at least 2 characters
+      setSuggestions([]);
+      setLoadingSuggestions(false);
+      return;
+    }
+    setLoadingSuggestions(true);
+    debounceTimeoutRef.current = setTimeout(async () => {
+      try {
+        const fetchedSuggestions = await getAutocompleteSuggestions(field, query);
+        setSuggestions(fetchedSuggestions);
+      } catch (error) {
+        console.error('Error fetching autocomplete suggestions:', error);
+        setSuggestions([]);
+      } finally {
+        setLoadingSuggestions(false);
+      }
+    }, 300); // 300ms debounce delay
   };
-  type FilterGroup = {
-    field: string;
-    conditions: FilterCondition[];
-    id: string;
-  };
-  const [localFilterGroups, setLocalFilterGroups] = useState<FilterGroup[]>([]);
-  const filterGroups = externalFilterGroups ?? localFilterGroups;
-  const setFilterGroups = externalSetFilterGroups ?? setLocalFilterGroups;
 
   // Helper for unique IDs
   const genId = () => Math.random().toString(36).slice(2, 10);
 
   // Add a new filter group (AND)
   const handleAddGroup = () => {
-    setFilterGroups([...filterGroups, {
-      field: columnsList[0].id,
-      conditions: [{
-        operator: 'is',
-        value: '',
+    if (onFilterGroupsChange && filterGroups) {
+      onFilterGroupsChange([...filterGroups, {
+        field: columnsList[0].id,
+        conditions: [{
+          operator: 'is',
+          value: '',
+          id: genId(),
+        }],
         id: genId(),
-      }],
-      id: genId(),
-    }]);
+      }]);
+    }
   };
 
   // Add OR condition to a group (adds a new filter value, not a new group)
   const handleAddOrCondition = (groupIdx: number) => {
-    setFilterGroups(filterGroups.map((g, i) => i === groupIdx ? {
-      ...g,
-      conditions: [...g.conditions, {
-        operator: 'is',
-        value: '',
-        id: genId(),
-      }],
-    } : g));
+    if (onFilterGroupsChange && filterGroups) {
+      onFilterGroupsChange(filterGroups.map((g, i) => i === groupIdx ? {
+        ...g,
+        conditions: [...g.conditions, {
+          operator: 'is',
+          value: '',
+          id: genId(),
+        }],
+      } : g));
+    }
   };
 
   // Remove a condition from a group
   const handleRemoveCondition = (groupIdx: number, condIdx: number) => {
-    setFilterGroups(filterGroups.map((g: FilterGroup, i: number) => i === groupIdx ? {
-      ...g,
-      conditions: g.conditions.filter((_: FilterCondition, j: number) => j !== condIdx),
-    } : g).filter((g: FilterGroup) => g.conditions.length > 0));
+    if (onFilterGroupsChange && filterGroups) {
+      onFilterGroupsChange(filterGroups.map((g: FilterGroup, i: number) => i === groupIdx ? {
+        ...g,
+        conditions: g.conditions.filter((_: FilterCondition, j: number) => j !== condIdx),
+      } : g).filter((g: FilterGroup) => g.conditions.length > 0));
+    }
   };
 
   // Remove a group
   const handleRemoveGroup = (groupIdx: number) => {
-    setFilterGroups(filterGroups.filter((_, i) => i !== groupIdx));
+    if (onFilterGroupsChange && filterGroups) {
+      onFilterGroupsChange(filterGroups.filter((_, i) => i !== groupIdx));
+    }
   };
 
   // Update a condition field/operator/value
   const handleUpdateCondition = (groupIdx: number, condIdx: number, updates: Partial<FilterCondition>) => {
-    setFilterGroups(filterGroups.map((g: FilterGroup, i: number) => i === groupIdx ? {
-      ...g,
-      conditions: g.conditions.map((c: FilterCondition, j: number) => j === condIdx ? { ...c, ...updates } : c),
-    } : g));
+    if (onFilterGroupsChange && filterGroups) {
+      onFilterGroupsChange(filterGroups.map((g: FilterGroup, i: number) => i === groupIdx ? {
+        ...g,
+        conditions: g.conditions.map((c: FilterCondition, j: number) => j === condIdx ? { ...c, ...updates } : c),
+      } : g));
+    }
   };
 
   const handleUpdateGroupField = (groupIdx: number, field: string) => {
-    setFilterGroups(filterGroups.map((g, i) => i === groupIdx ? {
-      ...g,
-      field,
-    } : g));
+    if (onFilterGroupsChange && filterGroups) {
+      onFilterGroupsChange(filterGroups.map((g, i) => i === groupIdx ? {
+        ...g,
+        field,
+      } : g));
+    }
   };
 
   // Clear all filters
-  const handleClearAllFilters = () => setFilterGroups([]);
+  const handleClearAllFilters = () => {
+    if (onFilterGroupsChange) {
+      onFilterGroupsChange([]);
+    }
+  };
 
   const handleToggle = (id: string) => {
-    if (selectedColumns.includes(id)) {
-      onChange(selectedColumns.filter((col) => col !== id));
-    } else {
-      onChange([...selectedColumns, id]);
+    if (onColumnsChange && selectedColumns) {
+      if (selectedColumns.includes(id)) {
+        onColumnsChange(selectedColumns.filter((col) => col !== id));
+      } else {
+        onColumnsChange([...selectedColumns, id]);
+      }
     }
   };
 
   const handleSelectAll = () => {
-    onChange(columnsList.map((col) => col.id));
+    if (onColumnsChange) {
+      onColumnsChange(columnsList.map((col) => col.id));
+    }
   };
 
   const handleClearAll = () => {
-    onChange([]);
+    if (onColumnsChange) {
+      onColumnsChange([]);
+    }
   };
 
   const handleDefault = () => {
-    onChange(columnsList.filter((col) => col.default).map((col) => col.id));
+    if (onColumnsChange) {
+      onColumnsChange(columnsList.filter((col) => col.default).map((col) => col.id));
+    }
   };
 
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
       <Box sx={{ width: 340, p: 3, display: "flex", flexDirection: "column", height: "100%" }}>
-        <Tabs value={tab} onChange={(_, v) => setTab(v)}>
-          {externalFilterGroups && <Tab label="Advance Filters" />}
-          <Tab label="Columns" />
-        </Tabs>
-        {externalFilterGroups && tab === 0 && (
+        {mode === 'filters' && filterGroups && ( // Conditionally render filters
           <>
             <Box sx={{ mt: 2, mb: 2 }}>
               <Typography variant="subtitle2" sx={{ mb: 2 }}>Advance Filters</Typography>
@@ -219,13 +262,61 @@ export default function ColumnSelectionDrawer({
                                 </label>
                               </Box>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
-                                <input
-                                  type="text"
-                                  value={cond.value}
-                                  onChange={e => handleUpdateCondition(groupIdx, condIdx, { value: e.target.value })}
-                                  style={{ padding: 6, borderRadius: 4, border: '1px solid #ccc', minWidth: 100 }}
-                                  placeholder="Value"
-                                />
+                                {group.field === 'recordType' ? (
+                                  <select
+                                    value={cond.value}
+                                    onChange={e => handleUpdateCondition(groupIdx, condIdx, { value: e.target.value })}
+                                    style={{ padding: 6, borderRadius: 4, border: '1px solid #ccc', minWidth: 100 }}
+                                  >
+                                    {recordTypeOptions.map(option => (
+                                      <option key={option} value={option}>{option}</option>
+                                    ))}
+                                  </select>
+                                ) : group.field === 'recordStatus' ? (
+                                  <select
+                                    value={cond.value}
+                                    onChange={e => handleUpdateCondition(groupIdx, condIdx, { value: e.target.value })}
+                                    style={{ padding: 6, borderRadius: 4, border: '1px solid #ccc', minWidth: 100 }}
+                                  >
+                                    {recordStatusOptions.map(option => (
+                                      <option key={option} value={option}>{option}</option>
+                                    ))}
+                                  </select>
+                                ) : (
+                                  <Box sx={{ position: 'relative', flex: 1 }}>
+                                    <input
+                                      type="text"
+                                      value={cond.value}
+                                      onChange={e => {
+                                        handleUpdateCondition(groupIdx, condIdx, { value: e.target.value });
+                                        if (autocompleteFields.includes(group.field)) {
+                                          debouncedFetchSuggestions(group.field, e.target.value);
+                                        }
+                                      }}
+                                      style={{ padding: 6, borderRadius: 4, border: '1px solid #ccc', width: '100%' }}
+                                      placeholder="Value"
+                                    />
+                                    {loadingSuggestions && (
+                                      <Typography variant="caption" sx={{ position: 'absolute', right: 5, top: '50%', transform: 'translateY(-50%)', color: '#888' }}>Loading...</Typography>
+                                    )}
+                                    {suggestions.length > 0 && !loadingSuggestions && autocompleteFields.includes(group.field) && (
+                                      <List sx={{ position: 'absolute', zIndex: 1, width: '100%', bgcolor: 'background.paper', border: '1px solid #ccc', borderRadius: 1, mt: 0.5, maxHeight: 150, overflowY: 'auto' }}>
+                                        {suggestions.map((suggestion, sIdx) => (
+                                          <ListItem
+                                            key={sIdx}
+                                            onClick={() => {
+                                              handleUpdateCondition(groupIdx, condIdx, { value: suggestion });
+                                              setSuggestions([]); // Clear suggestions after selection
+                                            }}
+                                            sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
+                                          >
+                                            <Typography>{suggestion}</Typography>
+                                          </ListItem>
+                                        ))}
+                                      </List>
+                                    )}
+                                  </Box>
+                                )}
                                 <Button variant="text" color="error" size="small" sx={{ minWidth: 32, fontSize: 18, py: 0.5 }} onClick={() => handleRemoveCondition(groupIdx, condIdx)}>×</Button>
                               </Box>
                               {condIdx < group.conditions.length - 1 && (
@@ -262,7 +353,7 @@ export default function ColumnSelectionDrawer({
             </Box>
           </>
         )}
-        {tab === 1 && (
+        {mode === 'columns' && selectedColumns && (
           <>
             <Box sx={{ display: "flex", alignItems: "center", mt: 2, mb: 1 }}>
               <Typography variant="subtitle2" sx={{ flex: 1 }}>
@@ -290,7 +381,7 @@ export default function ColumnSelectionDrawer({
             </List>
             <Box sx={{ mt: "auto", display: "flex", gap: 2 }}>
               <Button variant="outlined" onClick={onClose} sx={{ flex: 1 }}>Cancel</Button>
-              <Button variant="contained" onClick={onApply} sx={{ flex: 1 }}>Apply Changes</Button>
+              <Button variant="contained" onClick={onApplyColumns} sx={{ flex: 1 }}>Apply Changes</Button>
             </Box>
           </>
         )}
@@ -298,3 +389,5 @@ export default function ColumnSelectionDrawer({
     </Drawer>
   );
 }
+
+
